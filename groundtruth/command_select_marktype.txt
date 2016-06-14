@@ -1,0 +1,17 @@
+# !/bin/sh
+#
+# Retrouver la liste de toutes les markingype
+#
+find . ! \( -name '*plain.xml' \) -o -name '*.xml' -exec grep -oP '(?<=<markingtype>).*?(?=</markingtype>)' {} \;| cut -d ">" -f 2 | cut -d "<" -f 1 | sort| uniq
+
+Résultat :
+Disc
+Fundus_area
+Haemorrhages
+Hard_exudates
+IRMA
+Neovascularisation
+Red_small_dots
+Soft_exudates
+
+Remarque : les 2 1ers ne sont pas des symptômes, mais des marques de zones à repérer sur la photo
