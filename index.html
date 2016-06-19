@@ -1,277 +1,275 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<style>
+<html lang="fr" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <head>
+    <meta charset="utf-8">
+    <!--link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css"-->
+    <title>Intro Example</title>
 
-body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  width: 960px;
-  height: 500px;
-  position: relative;
-}
+    <style>
 
-#canvas {
-}
+	.round_rect1  {
+      fill: orange;
+      stroke: grey;
+      stroke-width:5;
+      opacity:0.5;
+      rx:20;
+      ry:20;
+      width: 200px;
+      height: 100px;
+      cursor: pointer;
+	}
+	.round_rect1 text {
+	  font: 24px sans-serif;
+      stroke: none;
+      fill: #000000;
+	}
+	.round_rect2  {
+      fill: yellow;
+      stroke: grey;
+      stroke-width:5;
+      opacity:0.5;
+      rx:20;
+      ry:20;
+      width: 200px;
+      height: 100px;
+      cursor: pointer;
+	}
+	.round_rect2 text {
+	  font: 20px sans-serif;
+      stroke: none;
+      fill: #000000;
+	}
 
-#canvas-svg {
-}
+	.line  {
+      stroke: grey;
+      stroke-width:5;
+      fill:none;
+
+	}
+	.symptom_text {
+	  font: 20px sans-serif;
+      stroke: none;
+      fill: #000000;
+      cursor: pointer;
+	}
 
 
-.land {
-  fill: #222;
-}
+    div.tooltip {
+      position: absolute;
+      text-align: center;
+      width: 400px;
+      height: 60px;
+      padding: 2px;
+      font: 14px sans-serif;
+      background: lightsteelblue;
+      border: 0px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
 
-.boundary {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 1px;
-}
+    </style>
+  </head>
 
-#tooltip-container {
-  position: absolute;
-  background-color: #fff;
-  color: #000;
-  padding: 10px;
-  border: 1px solid;
-  display: none;
-}
+  <body>
 
-.tooltip_key {
-  font-weight: bold;
-}
-
-.tooltip_value {
-  margin-left: 20px;
-  float: right;
-}
-
-</style>
-
-<div id="tooltip-container"></div>
-
-<div id="canvas-svg"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.1.0/topojson.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<!-- load the d3.js library -->
+<script src="http://d3js.org/d3.v3.min.js"></script>
 
 <script>
 
-d3.csv("/DM2015_v2_us.csv", function(err, data) {
+var url_pref = "http://catherineverdiergo.github.io";
 
-  var config = {
-    "data0":"Country",
-    "data1":"idf_reg",
-    "data2":"prev",
-    "label0":"label 0",
-    "label1":"label 1",
-    "color0":"#99ccff",
-    "color1":"#0050A1",
-    "width":800,
-    "height":400
-  }
-  
-  var width = 960,
-      height = 960;
-  
-  var COLOR_COUNTS = 9;
-  
-  function Interpolate(start, end, steps, count) {
-      var s = start,
-          e = end,
-          final = s + (((e - s) / steps) * count);
-      return Math.floor(final);
-  }
+// Define the div for the tooltip
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
-  /**
-  *  Class Color
-  */
-  function Color(_r, _g, _b) {
-      var r, g, b;
-      var setColors = function(_r, _g, _b) {
-          r = _r;
-          g = _g;
-          b = _b;
-      };
-  
-      setColors(_r, _g, _b);
-      this.getColors = function() {
-          var colors = {
-              r: r,
-              g: g,
-              b: b
-          };
-          return colors;
-      };
-  }
-
-  /**
-  *  Convert HTML hexa code color to (r,g,b) dictionary object
-  */
-  function hexToRgb(hex) {
-      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16)
-      } : null;
-  }
-
-  /**
-  *  Format huge value with proper unit (K, M or B)
-  */
-  function valueFormat(d) {
-    if (d > 1000000000) {
-      return Math.round(d / 1000000000 * 10) / 10 + "B";
-    } else if (d > 1000000) {
-      return Math.round(d / 1000000 * 10) / 10 + "M";
-    } else if (d > 1000) {
-      return Math.round(d / 1000 * 10) / 10 + "K";
-    } else {
-      return d;
-    }
-  }
-  
-  var COLOR_FIRST = config.color0, COLOR_LAST = config.color1;
-  
-  var rgb = hexToRgb(COLOR_FIRST);
-  
-  var COLOR_START = new Color(rgb.r, rgb.g, rgb.b);
-  
-  rgb = hexToRgb(COLOR_LAST);
-  var COLOR_END = new Color(rgb.r, rgb.g, rgb.b);
-  
-  var startColors = COLOR_START.getColors(),
-      endColors = COLOR_END.getColors();
-  
-  var colors = [];
-
-  /**
-  * Define COLOR_COUNTS Color objects using a colour chart from start to end colors
-  */
-  for (var i = 0; i < COLOR_COUNTS; i++) {
-    var r = Interpolate(startColors.r, endColors.r, COLOR_COUNTS, i);
-    var g = Interpolate(startColors.g, endColors.g, COLOR_COUNTS, i);
-    var b = Interpolate(startColors.b, endColors.b, COLOR_COUNTS, i);
-    colors.push(new Color(r, g, b));
-  }
-  
-  var MAP_KEY = config.data0;     // key = Country
-  var MAP_VALUE = config.data2;   // value = diabet prevalence
-  
-  var projection = d3.geo.mercator()
-      .scale((width + 1) / 2 / Math.PI)
-      .translate([width / 2, height / 2])
-      .precision(.1);
-  
-  var path = d3.geo.path()
-      .projection(projection);
-  
-  var graticule = d3.geo.graticule();
-  
-  var svg = d3.select("#canvas-svg").append("svg")
-      .attr("width", width)
-      .attr("height", height);
-  
-  svg.append("path")
-      .datum(graticule)
-      .attr("class", "graticule")
-      .attr("d", path);
-  
-  var valueHash = {};
-  
-  function log10(val) {
-    return Math.log(val);
-  }
-  
-  data.forEach(function(d) {
-    valueHash[d[MAP_KEY]] = +d[MAP_VALUE];
-  });
-  
-  var quantize = d3.scale.quantize()
-      .domain([0, 30.0])
-      .range(d3.range(COLOR_COUNTS).map(function(i) { return i }));
-  
-  quantize.domain([d3.min(data, function(d){
-      return (+d[MAP_VALUE]) }),
-    d3.max(data, function(d){
-      return (+d[MAP_VALUE]) })]);
-  
-  d3.json("https://s3-us-west-2.amazonaws.com/vida-public/geo/world-topo-min.json", function(error, world) {
-    var countries = topojson.feature(world, world.objects.countries).features;
-  
-    svg.append("path")
-       .datum(graticule)
-       .attr("class", "choropleth")
-       .attr("d", path);
-  
-    var g = svg.append("g");
-  
-    g.append("path")
-     .datum({type: "LineString", coordinates: [[-180, 0], [-90, 0], [0, 0], [90, 0], [180, 0]]})
-     .attr("class", "equator")
-     .attr("d", path);
-  
-    var country = g.selectAll(".country").data(countries);
-  
-    country.enter().insert("path")
-        .attr("class", "country")
-        .attr("d", path)
-        .attr("id", function(d,i) { return d.id; })
-        .attr("title", function(d) { return d.properties.name; })
-        .style("fill", function(d) {
-          if (valueHash[d.properties.name]) {
-            var c = quantize((valueHash[d.properties.name]));
-            var color = colors[c].getColors();
-            return "rgb(" + color.r + "," + color.g +
-                "," + color.b + ")";
-          } else {
-            return "#ccc";
+var symptoms = {"symptoms" :[
+          {
+            "id":"Soft_exudates",
+            "name": "Exsudat modéré",
+            "info": "Epanchement de liquide de nature séreuse dû \
+            à une modification de la perméabilité de la membrane consécutive à une inflammation \
+            contenant une forte concentration de leucocytes"
+          },
+          {
+            "id":"Hard_exudates",
+            "name": "Exsudat sévère",
+          },
+          {
+            "id":"Haemorrhages",
+            "name": "Hémorragie",
+          },
+          {
+            "id":"IRMA",
+            "name": "IRMA",
+            "info": "anomalies microvasculaires intrarétiniennes (ou AMIR): dilatations et télangiectasies vasculaires"
+          },
+          {
+            "id":"Neovascularisation",
+            "name": "Néovascularisation",
+          },
+          {
+            "id":"Red_small_dots",
+            "name": "Petits points rouge",
           }
-        })
-        .on("mousemove", function(d) {
-            var html = "";
-  
-            html += "<div class=\"tooltip_kv\">";
-            html += "<span class=\"tooltip_key\">";
-            html += d.properties.name;
-            html += "</span>";
-            html += "<span class=\"tooltip_value\">";
-            html += (valueHash[d.properties.name] ? valueFormat(valueHash[d.properties.name]) : "");
-            html += "";
-            html += "</span>";
-            html += "</div>";
-            
-            $("#tooltip-container").html(html);
-            $(this).attr("fill-opacity", "0.8");
-            $("#tooltip-container").show();
-            
-            var coordinates = d3.mouse(this);
-            
-            var map_width = $('.choropleth')[0].getBoundingClientRect().width;
-            
-            if (d3.event.pageX < map_width / 2) {
-              d3.select("#tooltip-container")
-                .style("top", (d3.event.layerY + 15) + "px")
-                .style("left", (d3.event.layerX + 15) + "px");
-            } else {
-              var tooltip_width = $("#tooltip-container").width();
-              d3.select("#tooltip-container")
-                .style("top", (d3.event.layerY + 15) + "px")
-                .style("left", (d3.event.layerX - tooltip_width - 30) + "px");
-            }
-        })
-        .on("mouseout", function() {
-                $(this).attr("fill-opacity", "1.0");
-                $("#tooltip-container").hide();
-            });
-    
-    g.append("path")
-        .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
-        .attr("class", "boundary")
-        .attr("d", path);
-  });
-  
-  d3.select(self.frameElement).style("height", height + "px");
-});
+        ]
+      };
+
+
+// ************** Generate the tree diagram	 *****************
+var margin = {top: 220, right: 120, bottom: 0, left: 220},
+	width = 960 - margin.right - margin.left,
+	height = 800 - margin.top - margin.bottom;
+
+
+var svg = d3.select("body").append("svg")
+	.attr("width", width + margin.right + margin.left)
+	.attr("height", height + margin.top + margin.bottom)
+    .append("g")
+	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.select(self.frameElement).style("height", "500px");
+var x= 10;
+var y= 10;
+var rectangle1 = svg.append("rect")
+                            .attr("class","round_rect1")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("id","rect1");
+
+
+var text1 = svg.append("g")
+                        .attr("class","round_rect1")
+                        .append("text")
+                        .attr("x", x+20)
+                        .attr("y", y+60)
+                        .append("tspan")
+                        .attr("dx",10)
+                        .attr("dy",-20)
+                        .text("Réthinopathie")
+                        .append("tspan")
+                        .attr("dx",-120)
+                        .attr("dy",25)
+                        .text("diabétique");
+
+var obj = document.getElementById("rect1");
+var rect = obj.getBoundingClientRect();
+hl_length = 30;
+x1 = Number(rect.width.toFixed(0)) + 10;
+x2 = x1+hl_length;
+var line1 = svg.append("line").attr("class","line").attr("x1",x1).attr("y1",y+40).attr("x2",x2).attr("y2",y+40);
+
+var polyline1_x1 = x2;
+var polyline1_y1= -150;
+var polyline1_x2 = polyline1_x1 + hl_length;
+var polyline1_y2= 250;
+var polyline1 = draw_polyline(polyline1_x1,polyline1_y1,polyline1_x2,polyline1_y2)
+var x = polyline1_x2;
+var y = polyline1_y1 -40;
+var rectangle2 = svg.append("rect")
+                            .attr("class","round_rect2")
+                            .attr("x", x)
+                            .attr("y", y);
+
+var text2 = svg.append("g").attr("class","round_rect2")
+                        .append("text")
+                        .attr("x", x)
+                        .attr("y", y+80)
+                        .append("tspan")
+                        .attr("dx",2)
+                        .attr("dy",-40)
+                        .text("Prévalence du diabète")
+                        .append("tspan")
+                        .attr("dx",-150)
+                        .attr("dy",25)
+                        .text("dans le monde")
+                        .on("click",function() {
+                            window.location = url_pref;
+                         });
+y = -10
+var line2 = svg.append("line").attr("class","line").attr("x1",polyline1_x1).attr("y1",y).attr("x2",polyline1_x2).attr("y2",y);
+var rectangle3 = svg.append("rect")
+                            .attr("class","round_rect2")
+                            .attr("x", x)
+                            .attr("y", y-50);
+
+var text3 = svg.append("g").attr("class","round_rect2")
+                        .append("text")
+                        .attr("x", x+30)
+                        .attr("y", y+5)
+                        .text("Rétine normale");
+y=200;
+var rectangle4 = svg.append("rect")
+                            .attr("class","round_rect2")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("id","rect4");
+
+var text4 = svg.append("g").attr("class","round_rect2")
+                        .append("text")
+                        .attr("x", x+40)
+                        .attr("y", y+50)
+                        .text("Symptômes");
+
+x1 = x + Number(rect.width.toFixed(0));
+x2 = x1+hl_length;
+y = y +50;
+var line3 = svg.append("line").attr("class","line").attr("x1",x1).attr("y1",y).attr("x2",x2).attr("y2",y);
+var hl_symptom = 200;
+var polyline2_x1 = x2;
+var polyline2_y1= 100;
+var polyline2_x2 = polyline2_x1 + hl_symptom;
+var polyline2_y2= 350;
+
+var polyline2 = draw_polyline(polyline2_x1,polyline2_y1,polyline2_x2,polyline2_y2)
+
+var y1 = 100;
+for (var i=0;i<4;i++) {
+  y1 +=50;
+  svg.append("line").attr("class","line").attr("x1",polyline2_x1).attr("y1",y1).attr("x2",polyline2_x2).attr("y2",y1);
+}
+y1 = 40;
+
+symptoms = symptoms.symptoms;
+
+svg.selectAll("symptom").data(symptoms)
+    .enter().append("g").attr("class","symptom_text")
+                        .append("text")
+                        .attr("x", polyline2_x1+5)
+                        .attr("y", function(d) { y1 +=50;return y1; })
+                        .text(function(d) { return d.name; })
+                        .on("mouseover", function(d) {
+                              if (d.info) {
+                                div.transition().duration(200).style("opacity", .9);
+                                div	.html(d.info)
+                                      .style("left", (d3.event.pageX) + "px")
+                                      .style("top", (d3.event.pageY - 28) + "px");
+                              }
+                            })
+                        .on("mouseout", function(d) {
+                                div.transition().duration(500).style("opacity", 0);
+                        })
+                        .on("click", click_symptom);
+
+
+
+
+function click_symptom(d) {
+  var url = url_pref+"/diaretdb1_v2.html?symptom=";
+  if (d.id) window.location = url+d.id;
+}
+function draw_polyline(polyline_x1,polyline_y1,polyline_x2,polyline_y2) {
+    var polyline_points = polyline_x1+","+polyline_y1+" "+polyline_x2+","+polyline_y1+" "
+                       +polyline_x1+","+polyline_y1+" "+polyline_x1+","+polyline_y2+" "
+                       +polyline_x1+","+polyline_y2+" "+polyline_x2+","+polyline_y2;
+    var polyline = svg.append("polyline").attr("class","line").attr("points",polyline_points);
+    return polyline;
+}
+
 
 </script>
+
+  </body>
+</html>
