@@ -86,32 +86,36 @@ var div = d3.select("body").append("div")
 
 var symptoms = {"symptoms" :[
           {
-            "id":"Soft_exudates",
-            "name": "Exsudat modéré",
-            "info": "Epanchement de liquide de nature séreuse dû \
-            à une modification de la perméabilité de la membrane consécutive à une inflammation \
-            contenant une forte concentration de leucocytes"
-          },
-          {
-            "id":"Hard_exudates",
-            "name": "Exsudat sévère",
+            "id":"Red_small_dots",
+            "name": "Petits points rouge",
+            "info": "En présence de ce seul symptôme, la réthinopathie est légère et non proliférative"
           },
           {
             "id":"Haemorrhages",
             "name": "Hémorragie",
+            "info": "En présence de ce seul symptôme, la réthinopathie est légère et non proliférative"
+          },
+          {
+            "id":"Hard_exudates",
+            "name": "Exsudat sévère",
+            "info": "Apparaît à un stade modéré et non prolifératif de la maladie"
+          },
+          {
+            "id":"Soft_exudates",
+            "name": "Exsudat modéré",
+            "info": "Epanchement de liquide de nature séreuse dû \
+            à une modification de la perméabilité de la membrane consécutive à une inflammation \
+            contenant une forte concentration de leucocytes.(stade sévère et non prolifératif)"
+          },
+          {
+            "id":"Neovascularisation",
+            "name": "Néovascularisation",
+            "info": "A ce stade : début d'une baisse de l'acuité visuelle"
           },
           {
             "id":"IRMA",
             "name": "IRMA",
             "info": "anomalies microvasculaires intrarétiniennes (ou AMIR): dilatations et télangiectasies vasculaires"
-          },
-          {
-            "id":"Neovascularisation",
-            "name": "Néovascularisation",
-          },
-          {
-            "id":"Red_small_dots",
-            "name": "Petits points rouge",
           }
         ]
       };
@@ -199,7 +203,10 @@ var text3 = svg.append("g").attr("class","round_rect2")
                         .append("text")
                         .attr("x", x+30)
                         .attr("y", y+5)
-                        .text("Rétine normale");
+                        .text("Rétine normale")
+                        .on("click",function() {
+                            window.location = url_pref+"/diaretdb1_v2.html?symptom=Fundus_area";
+                         });
 y=200;
 var rectangle4 = svg.append("rect")
                             .attr("class","round_rect2")
