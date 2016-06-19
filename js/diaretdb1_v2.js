@@ -11,6 +11,8 @@ function define_diaretdb1() {
     var lastTextSize;
     currentImage = -1;
 
+    diaretdb1.scale = 0.55;
+
     diaretdb1.colorByMark = {
         "Disc":                 "#A1C5D1",
         "Fundus_area":          "#0AF570",
@@ -373,8 +375,8 @@ function define_diaretdb1() {
           console.log('canvas2 is null 1')
         diaretdb1.clearCanvas(canvas2);
         canvas2.style.top = canvas1.style.top;
-        diaretdb1.loadImgAnnotations(img,canvas2,0.55);
-        diaretdb1.mouseListener(canvas2,0.55,canvas1);
+        diaretdb1.loadImgAnnotations(img,canvas2,diaretdb1.scale);
+        diaretdb1.mouseListener(canvas2,diaretdb1.scale,canvas1);
         currentImage = 0;
         $('#car_inner .item').first().addClass('active');
         $('#car_indi > li').first().addClass('active');
@@ -395,8 +397,8 @@ function define_diaretdb1() {
             console.log('canvas2 is null 2')
           diaretdb1.clearCanvas(canvas2);
           canvas2.style.top = canvas1.style.top;
-          diaretdb1.loadImgAnnotations(diaretdb1['configBySymptom'][curGroup][currentImage],canvas2,0.55);
-          diaretdb1.mouseListener(canvas2,0.55,canvas1);
+          diaretdb1.loadImgAnnotations(diaretdb1['configBySymptom'][curGroup][currentImage],canvas2,diaretdb1.scale);
+          diaretdb1.mouseListener(canvas2,diaretdb1.scale,canvas1);
           // console.log('slide event end!');
         });
     }
